@@ -8,7 +8,7 @@ import {
   collection, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { PeanutBatch } from './types';
+import { PeanutBatch, AppTemplate, DEFAULT_TEMPLATE } from './types';
 
 // Components
 import TraceabilityView from './components/TraceabilityView';
@@ -17,11 +17,12 @@ import InventoryTable from './components/InventoryTable';
 import PeanutForm from './components/PeanutForm';
 import BatchDetails from './components/BatchDetails';
 import QRScanner from './components/QRScanner';
+import TemplateEditor from './components/TemplateEditor';
 
 // Utilities
 import { 
   Database, ShieldCheck, Search, LogOut, KeyRound, 
-  HelpCircle, Sparkles, Loader, AlertCircle, RefreshCw, Eye
+  HelpCircle, Sparkles, Loader, AlertCircle, RefreshCw, Eye, Settings
 } from 'lucide-react';
 
 export default function App() {
@@ -30,6 +31,10 @@ export default function App() {
   const [storedHash, setStoredHash] = useState<string | null>(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
   const [isLoadingBatches, setIsLoadingBatches] = useState(true);
+  
+  // Custom Dynamic Template fields configuration state
+  const [template, setTemplate] = useState<AppTemplate>(DEFAULT_TEMPLATE);
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
 
   // App routing and sessions
   const [activeTab, setActiveTab] = useState<'trace' | 'admin'>('trace');
@@ -78,6 +83,23 @@ export default function App() {
       console.error('Failed to load admin config:', err);
       setIsLoadingConfig(false);
     });
+  }, []);
+
+  // Realtime subscription for layout template
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'system', 'template'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setTemplate(docSnap.data() as AppTemplate);
+        } else {
+          setTemplate(DEFAULT_TEMPLATE);
+        }
+      },
+      (error) => {
+        console.error('Failed to load template layout:', error);
+      }
+    );
+    return () => unsub();
   }, []);
 
   // Realtime subscription for peanut batches
@@ -159,6 +181,16 @@ export default function App() {
       }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `peanut_batches/${batch.id}`);
+    }
+  };
+
+  const handleSaveTemplate = async (newTemplate: AppTemplate) => {
+    try {
+      await setDoc(doc(db, 'system', 'template'), newTemplate);
+      setTemplate(newTemplate);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'system/template');
+      throw error;
     }
   };
 
@@ -348,6 +380,7 @@ export default function App() {
                 qrQueryId={qrQueryId}
                 onClearQueryId={() => setQrQueryId(null)}
                 onOpenScanner={() => setShowScanner(true)}
+                template={template}
               />
             )}
 
@@ -367,7 +400,7 @@ export default function App() {
                   <div className="space-y-6">
                     
                     {/* Admin Greeting header */}
-                    <div className="flex justify-between items-center pb-4 border-b border-bento-cream">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-bento-cream gap-4">
                       <div>
                         <h2 className="text-lg font-bold text-bento-dark flex items-center">
                           <span>安全控管中心</span>
@@ -376,22 +409,36 @@ export default function App() {
                           </span>
                         </h2>
                         <p className="text-bento-mid text-xs mt-1">
-                          您可以執行手動快速錄入、包裝貼紙 QR Code 列印、庫存點交、及完整盤點表數據匯出成 CSV。
+                          您可以執行自訂履歷欄位、手動快速錄入、包裝貼紙 QR Code 下載列印與庫存盤點表匯出。
                         </p>
                       </div>
+
+                      {!showForm && !selectedBatch && (
+                        <button
+                          onClick={() => setShowTemplateEditor(!showTemplateEditor)}
+                          className={`py-2 px-4 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm border ${
+                            showTemplateEditor 
+                              ? 'bg-[#1a130e] text-white border-transparent' 
+                              : 'bg-white hover:bg-bento-sand text-bento-dark border-bento-cream'
+                          }`}
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>{showTemplateEditor ? '返回履歷庫存清單' : '⚙️ 自訂履歷欄目標題與預設選項'}</span>
+                        </button>
+                      )}
                     </div>
 
                     {/* Empty alert with DEMO generator for smooth onboarding */}
-                    {batches.length === 0 && !showForm && (
+                    {batches.length === 0 && !showForm && !showTemplateEditor && (
                       <div className="bg-white border border-bento-cream p-6 rounded-3xl shadow-[0_4px_20px_rgba(74,55,40,0.05)] flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-start space-x-3.5 text-left">
                           <div className="p-2.5 bg-bento-sand rounded-xl text-bento-dark mt-1 shrink-0">
                             <Sparkles className="w-5 h-5 text-bento-dark" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-bento-dark text-sm">歡迎使用！目前資料庫中尚無花生履歷</h4>
+                            <h4 className="font-bold text-bento-dark text-sm">歡迎使用！目前資料庫中尚無履歷</h4>
                             <p className="text-bento-mid text-xs mt-1 leading-relaxed">
-                              點擊右側的「手動錄入新批次」填寫您的首批花生；或者，我們已為您備好 3 組台灣黃金花生品種（黑金剛、台南14號及9號）的測試範例，點擊下方按鈕即可一鍵快速載入！
+                              點擊右側的「手動錄入新批次」填寫首批資料；或者，我們已為您備好 3 組測試範例，點擊下方按鈕即可一鍵快速載入！
                             </p>
                           </div>
                         </div>
@@ -407,7 +454,14 @@ export default function App() {
                     )}
 
                     {/* View Router */}
-                    {showForm ? (
+                    {showTemplateEditor ? (
+                      // Custom dynamic fields layout / template settings
+                      <TemplateEditor
+                        currentTemplate={template}
+                        onSave={handleSaveTemplate}
+                        onBack={() => setShowTemplateEditor(false)}
+                      />
+                    ) : showForm ? (
                       // Add / Edit form (PeanutForm)
                       <PeanutForm
                         initialData={editingBatch}
@@ -416,6 +470,7 @@ export default function App() {
                           setShowForm(false);
                           setEditingBatch(null);
                         }}
+                        template={template}
                       />
                     ) : selectedBatch ? (
                       // Detail certificate inspector view (BatchDetails)
@@ -430,6 +485,7 @@ export default function App() {
                           setShowForm(true);
                         }}
                         onChangeStatus={handleChangeStatus}
+                        template={template}
                       />
                     ) : (
                       // Main Inventory Listing
@@ -449,6 +505,7 @@ export default function App() {
                         }}
                         onOpenScanner={() => setShowScanner(true)}
                         onChangeStatus={handleChangeStatus}
+                        template={template}
                       />
                     )}
                   </div>
