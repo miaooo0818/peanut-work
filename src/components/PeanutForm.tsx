@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { PeanutBatch } from '../types';
+import { PeanutBatch, AppTemplate } from '../types';
 import { generateTraceabilityId } from '../utils';
 import { Save, X, RotateCcw, Box, User, Calendar, FileSpreadsheet, Percent, Beaker, HelpCircle } from 'lucide-react';
 
@@ -12,6 +12,7 @@ interface PeanutFormProps {
   initialData: PeanutBatch | null;
   onSubmit: (batch: PeanutBatch) => Promise<void>;
   onCancel: () => void;
+  template: AppTemplate;
 }
 
 const BREED_PRESETS = [
@@ -24,23 +25,17 @@ const BREED_PRESETS = [
   '其他品種'
 ];
 
-const GRADE_PRESETS = [
-  { value: '特級', label: '特級 (水分<8%, 籽粒飽滿無疵)' },
-  { value: '優等', label: '優等 (水分8-10%, 品質良好)' },
-  { value: '合格', label: '合格 (水分10-12%, 達標準)' },
-  { value: '淘汰', label: '淘汰 (含黃麴毒素或水分>12%過高)' }
-];
+export default function PeanutForm({ initialData, onSubmit, onCancel, template }: PeanutFormProps) {
+  const breedOptions = [...(template.breed.options || BREED_PRESETS)];
+  if (!breedOptions.includes('其他品種')) {
+    breedOptions.push('其他品種');
+  }
+  
+  const toxinOptions = template.toxinStatus.options || ['未檢出', '合格', '超標', '未檢'];
+  const gradeOptions = template.grade.options || ['特級', '優等', '合格', '淘汰'];
 
-const TOXIN_PRESETS = [
-  { value: '未檢出', label: '未檢出 (安全無檢出)' },
-  { value: '合格', label: '合格 (微量符合法規標準)' },
-  { value: '超標', label: '超標 (超出國家法規安全範圍)' },
-  { value: '未檢', label: '未檢 (等待檢體報告中)' }
-];
-
-export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFormProps) {
   const [id, setId] = useState('');
-  const [breed, setBreed] = useState(BREED_PRESETS[0]);
+  const [breed, setBreed] = useState(breedOptions[0]);
   const [customBreed, setCustomBreed] = useState('');
   const [farmer, setFarmer] = useState('');
   const [harvestDate, setHarvestDate] = useState('');
@@ -49,8 +44,8 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
   const [weight, setWeight] = useState<number | ''>('');
   const [moisture, setMoisture] = useState<number | ''>('');
   const [oilContent, setOilContent] = useState<number | ''>('');
-  const [toxinStatus, setToxinStatus] = useState<PeanutBatch['toxinStatus']>('未檢出');
-  const [grade, setGrade] = useState<PeanutBatch['grade']>('優等');
+  const [toxinStatus, setToxinStatus] = useState(toxinOptions[0]);
+  const [grade, setGrade] = useState(gradeOptions[0]);
   const [status, setStatus] = useState<PeanutBatch['status']>('在庫');
   const [remarks, setRemarks] = useState('');
   const [customFields, setCustomFields] = useState<{ label: string; value: string }[]>([]);
@@ -60,9 +55,13 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
 
   // Initialize values
   useEffect(() => {
+    const defaultBreed = breedOptions[0] || '其他品種';
+    const defaultToxin = toxinOptions[0] || '未檢出';
+    const defaultGrade = gradeOptions[0] || '優等';
+
     if (initialData) {
       setId(initialData.id);
-      if (BREED_PRESETS.includes(initialData.breed)) {
+      if (breedOptions.includes(initialData.breed)) {
         setBreed(initialData.breed);
         setCustomBreed('');
       } else {
@@ -86,20 +85,20 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
       setHarvestDate(todayISO);
       setEntryDate(todayISO);
       setId(generateTraceabilityId(todayISO));
-      setBreed(BREED_PRESETS[0]);
+      setBreed(defaultBreed);
       setCustomBreed('');
       setFarmer('');
       setWarehouseLocation('倉庫 A-1');
       setWeight('');
       setMoisture('');
       setOilContent('');
-      setToxinStatus('未檢出');
-      setGrade('優等');
+      setToxinStatus(defaultToxin);
+      setGrade(defaultGrade);
       setStatus('在庫');
       setRemarks('');
       setCustomFields([]);
     }
-  }, [initialData]);
+  }, [initialData, template]);
 
   // Handle automatic or regional id generation
   const handleRegenerateId = () => {
@@ -198,9 +197,9 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
       <div className="bg-bento-dark px-6 py-6 text-white flex justify-between items-center">
         <div>
           <h3 className="text-lg font-black font-sans leading-snug">
-            {initialData ? '修改花生履歷數據' : '手動錄入花生新批次'}
+            {initialData ? `修改${template.breed.customLabel}履歷數據` : `手動錄入${template.breed.customLabel}新批次`}
           </h3>
-          <p className="text-bento-cream text-[11px] mt-1 font-medium">請確實鍵入農作物檢驗數據，系統將儲存於雲端資料庫並對應專屬 QR Code。</p>
+          <p className="text-bento-cream text-[11px] mt-1 font-medium">請確實鍵入檢驗及品管數據，系統將儲存於雲端資料庫並對應專屬 QR Code。</p>
         </div>
         <button
           onClick={onCancel}
@@ -233,7 +232,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* ID */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5 flex items-center justify-between">
-                <span>溯源批次編號</span>
+                <span>{template.id.customLabel}</span>
                 {!initialData && (
                   <button
                     type="button"
@@ -260,7 +259,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Farmer */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5 flex items-center">
-                <span>栽種農民姓名</span>
+                <span>{template.farmer.customLabel}</span>
               </label>
               <input
                 type="text"
@@ -275,14 +274,14 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Breed selector */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                花生品種
+                {template.breed.customLabel}
               </label>
               <select
                 value={breed}
                 onChange={(e) => setBreed(e.target.value)}
                 className="w-full px-4 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
               >
-                {BREED_PRESETS.map((p, i) => (
+                {breedOptions.map((p, i) => (
                   <option key={i} value={p}>{p}</option>
                 ))}
               </select>
@@ -318,7 +317,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Harvest Date */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                採收日期
+                {template.harvestDate.customLabel}
               </label>
               <input
                 type="date"
@@ -332,7 +331,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Entry Date */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                入庫存放日期
+                {template.entryDate.customLabel}
               </label>
               <input
                 type="date"
@@ -347,7 +346,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Warehouse Location */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                倉庫存放儲位
+                {template.warehouseLocation.customLabel}
               </label>
               <input
                 type="text"
@@ -372,7 +371,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Weight */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5 flex items-center justify-between">
-                <span>進庫重量 (Kg)</span>
+                <span>{template.weight.customLabel}</span>
               </label>
               <div className="relative">
                 <input
@@ -384,14 +383,14 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
                   placeholder="例如: 500"
                   className="w-full pl-4 pr-12 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark placeholder-bento-mid focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
                 />
-                <span className="absolute right-4 top-2.5 text-xs text-bento-mid font-extrabold">公斤</span>
+                <span className="absolute right-4 top-2.5 text-xs text-bento-mid font-extrabold">單位</span>
               </div>
             </div>
 
             {/* Moisture */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                水分比率測量 (%)
+                {template.moisture.customLabel}
               </label>
               <div className="relative">
                 <input
@@ -410,7 +409,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Oil Content */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                含油率質測量 (%)
+                {template.oilContent.customLabel}
               </label>
               <div className="relative">
                 <input
@@ -419,8 +418,8 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
                   required
                   value={oilContent}
                   onChange={(e) => setOilContent(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="油豆合規通常在 45-52%"
-                  className="w-full pl-4 pr-12 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark placeholder-bento-mid focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
+                  placeholder="例如 45-52%"
+                  className="w-full pl-4 pr-12 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark placeholder-[#AFA19A] focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
                 />
                 <span className="absolute right-4 top-2.5 text-xs text-bento-mid font-extrabold">%</span>
               </div>
@@ -431,15 +430,15 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Toxin status */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                黃麴毒素(Aflatoxin) 檢測結果
+                {template.toxinStatus.customLabel}
               </label>
               <select
                 value={toxinStatus}
-                onChange={(e) => setToxinStatus(e.target.value as PeanutBatch['toxinStatus'])}
+                onChange={(e) => setToxinStatus(e.target.value)}
                 className="w-full px-4 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
               >
-                {TOXIN_PRESETS.map((t, i) => (
-                  <option key={i} value={t.value}>{t.label}</option>
+                {toxinOptions.map((t, i) => (
+                  <option key={i} value={t}>{t}</option>
                 ))}
               </select>
             </div>
@@ -447,15 +446,15 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Quality Grade */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                核定品質級別 (Grade)
+                {template.grade.customLabel}
               </label>
               <select
                 value={grade}
-                onChange={(e) => setGrade(e.target.value as PeanutBatch['grade'])}
+                onChange={(e) => setGrade(e.target.value)}
                 className="w-full px-4 py-2.5 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
               >
-                {GRADE_PRESETS.map((g, i) => (
-                  <option key={i} value={g.value}>{g.label}</option>
+                {gradeOptions.map((g, i) => (
+                  <option key={i} value={g}>{g}</option>
                 ))}
               </select>
             </div>
@@ -473,7 +472,7 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Status */}
             <div>
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                庫存現狀
+                {template.status.customLabel}
               </label>
               <div className="flex space-x-3 mt-1">
                 <label className={`flex-1 flex items-center justify-center border-2 rounded-xl py-2 px-3 cursor-pointer transition-all text-sm font-bold shadow-sm ${
@@ -510,12 +509,12 @@ export default function PeanutForm({ initialData, onSubmit, onCancel }: PeanutFo
             {/* Remarks */}
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-bento-dark mb-1.5">
-                補充記錄額外備註
+                {template.remarks.customLabel}
               </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="例如: 包裝箱稍微破損已修復, 濕度控制在 55% 以下存放."
+                placeholder="輸入其餘的特質備註或補充說明..."
                 rows={2}
                 className="w-full px-4 py-2 bg-[#FDFBF7] border border-bento-cream rounded-xl text-bento-dark placeholder-bento-mid focus:outline-none focus:ring-2 focus:ring-bento-dark text-sm font-semibold shadow-sm"
               />
