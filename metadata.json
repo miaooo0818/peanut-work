@@ -1,0 +1,6 @@
+{
+  "name": "花生履歷與庫存管理系統",
+  "description": "一個手動記錄花生品種、農民、採收日期與檢驗數據的履歷資料庫。能即時產生 QR Code 進行溯源查詢，並提供清晰的庫存總表、數據匯出與條碼掃描功能。",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
