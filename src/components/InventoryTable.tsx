@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { PeanutBatch } from '../types';
+import { PeanutBatch, AppTemplate } from '../types';
 import { downloadPeanutsCSV } from '../utils';
 import { 
   Search, SlidersHorizontal, ArrowDownAZ, LayoutGrid, ListFilter, 
@@ -20,6 +20,7 @@ interface InventoryTableProps {
   onAddNewBatch: () => void;
   onOpenScanner: () => void;
   onChangeStatus: (batch: PeanutBatch, newStatus: PeanutBatch['status']) => Promise<void>;
+  template: AppTemplate;
 }
 
 export default function InventoryTable({
@@ -30,6 +31,7 @@ export default function InventoryTable({
   onAddNewBatch,
   onOpenScanner,
   onChangeStatus,
+  template,
 }: InventoryTableProps) {
   // Search and Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,9 +149,9 @@ export default function InventoryTable({
             <Scale className="w-5 h-5 text-bento-dark" />
           </div>
           <div>
-            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">在庫花生總重量</span>
+            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">在存放{template.breed.customLabel}重量</span>
             <span className="text-xl font-black text-bento-dark">
-              {stats.totalWeight.toLocaleString()} <span className="text-xs font-normal text-bento-mid">公斤</span>
+              {stats.totalWeight.toLocaleString()} <span className="text-xs font-normal text-bento-mid">單位</span>
             </span>
           </div>
         </div>
@@ -160,7 +162,7 @@ export default function InventoryTable({
             <Droplets className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">存放平均含水量</span>
+            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">平均{template.moisture.customLabel}</span>
             <span className="text-xl font-black text-bento-dark">{stats.avgMoisture}%</span>
           </div>
         </div>
@@ -171,7 +173,7 @@ export default function InventoryTable({
             <TrendingUp className="w-5 h-5 text-yellow-600" />
           </div>
           <div>
-            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">存放平均含油量</span>
+            <span className="block text-[10px] text-bento-mid font-bold uppercase tracking-wider">平均{template.oilContent.customLabel}</span>
             <span className="text-xl font-black text-bento-dark">{stats.avgOil}%</span>
           </div>
         </div>
@@ -210,7 +212,7 @@ export default function InventoryTable({
             <button
               id="export-csv"
               disabled={processedBatches.length === 0}
-              onClick={() => downloadPeanutsCSV(processedBatches)}
+              onClick={() => downloadPeanutsCSV(processedBatches, template)}
               className="py-2.5 px-4 bg-white hover:bg-bento-sand border border-bento-cream text-bento-dark rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all disabled:opacity-50 cursor-pointer"
             >
               <FileDown className="w-4 h-4 text-bento-dark" />
@@ -234,7 +236,7 @@ export default function InventoryTable({
           
           {/* Breed */}
           <div>
-            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">花生品種</label>
+            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">{template.breed.customLabel}</label>
             <select
               id="filter-breed"
               value={selectedBreed}
@@ -249,7 +251,7 @@ export default function InventoryTable({
 
           {/* Status */}
           <div>
-            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">庫存狀態</label>
+            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">{template.status.customLabel}</label>
             <select
               id="filter-status"
               value={selectedStatus}
@@ -264,7 +266,7 @@ export default function InventoryTable({
 
           {/* Quality Grade */}
           <div>
-            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">核定等級</label>
+            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">{template.grade.customLabel}</label>
             <select
               id="filter-grade"
               value={selectedGrade}
@@ -272,16 +274,22 @@ export default function InventoryTable({
               className="w-full bg-white border border-bento-cream rounded-xl px-3 py-2 text-xs text-bento-dark focus:outline-none focus:ring-2 focus:ring-bento-dark font-semibold shadow-sm"
             >
               <option value="全部等級">全部等級</option>
-              <option value="特級">特級 (優選)</option>
-              <option value="優等">優等</option>
-              <option value="合格">合格</option>
-              <option value="淘汰">淘汰</option>
+              {template.grade.options?.map((g, idx) => (
+                <option key={idx} value={g}>{g}</option>
+              )) || (
+                <>
+                  <option value="特級">特級 (優選)</option>
+                  <option value="優等">優等</option>
+                  <option value="合格">合格</option>
+                  <option value="淘汰">淘汰</option>
+                </>
+              )}
             </select>
           </div>
 
           {/* Toxin status */}
           <div>
-            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">黃麴毒素核定</label>
+            <label className="block text-[10px] text-bento-dark font-extrabold mb-1.5 uppercase tracking-wider">{template.toxinStatus.customLabel}</label>
             <select
               id="filter-toxin"
               value={selectedToxin}
@@ -289,10 +297,16 @@ export default function InventoryTable({
               className="w-full bg-[#FCFBF7] border border-bento-cream rounded-xl px-3 py-2 text-xs text-bento-dark focus:outline-none focus:ring-2 focus:ring-bento-dark font-semibold shadow-sm"
             >
               <option value="全部檢測">全部檢測</option>
-              <option value="未檢出">未檢出 (安全)</option>
-              <option value="合格">合格</option>
-              <option value="超標">超標 (高風險)</option>
-              <option value="未檢">未檢 (報告中)</option>
+              {template.toxinStatus.options?.map((t, idx) => (
+                <option key={idx} value={t}>{t}</option>
+              )) || (
+                <>
+                  <option value="未檢出">未檢出 (安全)</option>
+                  <option value="合格">合格</option>
+                  <option value="超標">超標 (高風險)</option>
+                  <option value="未檢">未檢 (報告中)</option>
+                </>
+              )}
             </select>
           </div>
         </div>
@@ -305,42 +319,42 @@ export default function InventoryTable({
             <div className="w-12 h-12 bg-bento-sand rounded-full flex items-center justify-center text-bento-dark mx-auto">
               <Box className="w-6 h-6" />
             </div>
-            <p className="text-bento-dark text-sm font-extrabold">此篩選條件下，無任何花生履歷資料。</p>
-            <p className="text-bento-mid text-xs">您可以嘗試調整篩選條件或點擊「錄入新批次」手動建立一筆新履歷。</p>
+            <p className="text-bento-dark text-sm font-extrabold">此篩選條件下，無任何{template.breed.customLabel}履歷資料。</p>
+            <p className="text-bento-mid text-xs">您可以嘗試調整篩選條件或點擊「手動錄入新批次」建立一筆新履歷。</p>
           </div>
         ) : (
           <div className="overflow-x-auto text-left">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-bento-cream bg-bento-sand/30 text-bento-dark text-[11px] font-black tracking-wider uppercase">
-                  <th className="py-4 px-5">批次履歷編號</th>
-                  <th className="py-4 px-4 font-sans">品種 / 種類</th>
-                  <th className="py-4 px-4">農民姓名</th>
+                  <th className="py-4 px-5">{template.id.customLabel}</th>
+                  <th className="py-4 px-4 font-sans">{template.breed.customLabel}</th>
+                  <th className="py-4 px-4">{template.farmer.customLabel}</th>
                   <th 
                     className="py-4 px-4 cursor-pointer hover:text-bento-dark transition-colors"
                     onClick={() => toggleSort('entryDate')}
                   >
-                    <span>入庫日期</span>
+                    <span>{template.entryDate.customLabel}</span>
                     {sortBy === 'entryDate' && (sortOrder === 'asc' ? ' 🔼' : ' 🔽')}
                   </th>
                   <th 
                     className="py-4 px-4 text-right cursor-pointer hover:text-bento-dark transition-colors"
                     onClick={() => toggleSort('weight')}
                   >
-                    <span>淨重量 (Kg)</span>
+                    <span>{template.weight.customLabel}</span>
                     {sortBy === 'weight' && (sortOrder === 'asc' ? ' 🔼' : ' 🔽')}
                   </th>
                   <th 
                     className="py-4 px-4 text-right cursor-pointer hover:text-bento-dark transition-colors"
                     onClick={() => toggleSort('moisture')}
                   >
-                    <span>水分 (%)</span>
+                    <span>{template.moisture.customLabel}</span>
                     {sortBy === 'moisture' && (sortOrder === 'asc' ? ' 🔼' : ' 🔽')}
                   </th>
-                  <th className="py-4 px-4 text-center">毒素檢驗</th>
-                  <th className="py-4 px-4 text-center">核定級別</th>
-                  <th className="py-4 px-4">儲存儲位</th>
-                  <th className="py-4 px-4 text-center">庫存狀態</th>
+                  <th className="py-4 px-4 text-center">{template.toxinStatus.customLabel}</th>
+                  <th className="py-4 px-4 text-center">{template.grade.customLabel}</th>
+                  <th className="py-4 px-4">{template.warehouseLocation.customLabel}</th>
+                  <th className="py-4 px-4 text-center">{template.status.customLabel}</th>
                   <th className="py-4 px-5 text-right font-black">管理操作</th>
                 </tr>
               </thead>
