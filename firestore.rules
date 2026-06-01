@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Peanut batches
+    match /peanut_batches/{batchId} {
+      allow get: if true;
+      allow list: if true;
+      allow create, update, delete: if true;
+    }
+
+    // System config (stores password hash for admin)
+    match /system/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
