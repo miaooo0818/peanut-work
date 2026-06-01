@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "PeanutBatch": {
+      "title": "PeanutBatch",
+      "description": "Each batch of peanuts entered into the warehouse",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique traceability ID"
+        },
+        "breed": {
+          "type": "string",
+          "description": "Variety/Breed of peanut (品種)"
+        },
+        "farmer": {
+          "type": "string",
+          "description": "Farmer name (農民)"
+        },
+        "harvestDate": {
+          "type": "string",
+          "description": "Harvest date (採收日期)"
+        },
+        "entryDate": {
+          "type": "string",
+          "description": "Entry date to warehouse (入庫日期)"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Weight in kilograms (重量/公斤)"
+        },
+        "moisture": {
+          "type": "number",
+          "description": "Moisture content percentage (水分含量 %)"
+        },
+        "oilContent": {
+          "type": "number",
+          "description": "Oil content percentage (含油量 %)"
+        },
+        "toxinStatus": {
+          "type": "string",
+          "description": "Aflatoxin test status (黃麴毒素檢驗狀態 - e.g. 合格 / 未檢 / 未檢出 / 超標)"
+        },
+        "grade": {
+          "type": "string",
+          "description": "Grade (等級 - e.g. 特級, 優等, 合格, 淘汰)"
+        },
+        "warehouseLocation": {
+          "type": "string",
+          "description": "Warehouse storage location (倉庫儲位)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Inventory status (庫存狀態 - e.g. 在庫 / 已出庫)"
+        },
+        "remarks": {
+          "type": "string",
+          "description": "Remarks (備註)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": [
+        "id",
+        "breed",
+        "farmer",
+        "harvestDate",
+        "entryDate",
+        "weight",
+        "moisture",
+        "oilContent",
+        "toxinStatus",
+        "grade",
+        "status"
+      ]
+    },
+    "AdminConfig": {
+      "title": "AdminConfig",
+      "description": "System configuration for administrator authentication",
+      "type": "object",
+      "properties": {
+        "passwordHash": {
+          "type": "string",
+          "description": "SHA-256 hashed admin password"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the password was set"
+        }
+      },
+      "required": [
+        "passwordHash",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/peanut_batches/{batchId}": {
+      "schema": "PeanutBatch",
+      "description": "A collection containing traceability and test details of all peanut batches."
+    },
+    "/system/config": {
+      "schema": "AdminConfig",
+      "description": "Admin password configuration and other system-wide parameters."
+    }
+  }
+}
