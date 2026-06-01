@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { PeanutBatch } from '../types';
+import { PeanutBatch, AppTemplate } from '../types';
 import { Search, ScanLine, ShieldCheck, HelpCircle, Leaf, Sparkles, BookOpen, Warehouse, Heart } from 'lucide-react';
 import BatchDetails from './BatchDetails';
 
@@ -13,6 +13,7 @@ interface TraceabilityViewProps {
   qrQueryId: string | null;
   onClearQueryId: () => void;
   onOpenScanner: () => void;
+  template: AppTemplate;
 }
 
 export default function TraceabilityView({
@@ -20,6 +21,7 @@ export default function TraceabilityView({
   qrQueryId,
   onClearQueryId,
   onOpenScanner,
+  template,
 }: TraceabilityViewProps) {
   const [inputId, setInputId] = useState('');
   const [searchedBatch, setSearchedBatch] = useState<PeanutBatch | null>(null);
@@ -74,9 +76,9 @@ export default function TraceabilityView({
             <div className="inline-flex p-3 bg-bento-cream text-bento-dark rounded-2xl animate-bounce" style={{ animationDuration: '3s' }}>
               <ShieldCheck className="w-8 h-8 text-bento-dark" />
             </div>
-            <h2 className="text-xl md:text-2xl font-extrabold text-bento-dark">台灣安心花生．履歷溯源查詢專區</h2>
+            <h2 className="text-xl md:text-2xl font-extrabold text-bento-dark">安心{template.breed.customLabel}．履歷溯源查詢專區</h2>
             <p className="text-xs text-bento-mid leading-relaxed">
-              為了讓您吃得安心，我們提供每袋花生完整的種植來源、採收日期、水分含油及黃麴毒素實驗合格報告。您可以手動輸入包裝貼紙上的「溯源編號」或啟動相機進行條碼掃描查詢。
+              為了讓您買得開心、吃得放心，我們為每一批出廠的{template.breed.customLabel}登入完整的產地來源，您可以手動輸入包裝貼紙上的「溯源編號」或啟動相機進行條碼/QR code 掃描。
             </p>
           </div>
 
@@ -120,7 +122,7 @@ export default function TraceabilityView({
               <div>
                 <strong className="block font-semibold">查無此履歷編號</strong>
                 <span className="leading-relaxed">
-                  系統庫存中無「{inputId}」的任何登錄記錄。請檢查拼寫（注意英文字母大小寫與連字號），或點擊左上方相機進行實體貼紙掃描。
+                  系統庫存中無「{inputId}」的任何登錄記錄。請檢查拼寫（注意大小寫或特殊字元），或點擊左上方相機進行實體貼紙掃描。
                 </span>
               </div>
             </div>
@@ -135,7 +137,7 @@ export default function TraceabilityView({
             <div className="flex items-center space-x-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>
-                驗證成功：此為 <strong className="text-bento-dark">{searchedBatch.farmer}</strong> 在 <strong className="text-bento-dark">{searchedBatch.harvestDate}</strong> 採收的黃金花生，安全數據確實登錄。
+                驗證成功：此為 <strong className="text-bento-dark">{searchedBatch.farmer}</strong> 生產的{template.breed.customLabel}，安全數據與品管檢驗報告確實登錄。
               </span>
             </div>
             <button
@@ -150,6 +152,7 @@ export default function TraceabilityView({
             batch={searchedBatch}
             onBack={clearSearch}
             isAdminMode={false}
+            template={template}
           />
         </div>
       )}
