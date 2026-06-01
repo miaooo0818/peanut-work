@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PeanutBatch } from './types';
+import { PeanutBatch, AppTemplate } from './types';
 
 /**
  * Hash a text string using native SHA-256
@@ -37,8 +37,23 @@ export function generateTraceabilityId(dateString?: string): string {
 /**
  * Export peanut batch array to a downloadable Excel-friendly CSV with UTF-8 BOM
  */
-export function downloadPeanutsCSV(batches: PeanutBatch[]) {
-  const headers = [
+export function downloadPeanutsCSV(batches: PeanutBatch[], template?: AppTemplate) {
+  const headers = template ? [
+    template.id.customLabel,
+    template.breed.customLabel,
+    template.farmer.customLabel,
+    template.harvestDate.customLabel,
+    template.entryDate.customLabel,
+    template.weight.customLabel,
+    template.moisture.customLabel,
+    template.oilContent.customLabel,
+    template.toxinStatus.customLabel,
+    template.grade.customLabel,
+    template.warehouseLocation.customLabel,
+    template.status.customLabel,
+    template.remarks.customLabel,
+    '建立時間'
+  ] : [
     '履歷溯源編號',
     '品種',
     '農民姓名',
@@ -88,9 +103,10 @@ export function downloadPeanutsCSV(batches: PeanutBatch[]) {
   
   const now = new Date();
   const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  const filenamePrefix = template?.breed.customLabel || '履歷';
   
   link.setAttribute('href', url);
-  link.setAttribute('download', `花生在庫履歷盤點表_${timestamp}.csv`);
+  link.setAttribute('download', `${filenamePrefix}在庫履歷盤點表_${timestamp}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
