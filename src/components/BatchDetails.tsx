@@ -4,7 +4,7 @@
  */
 
 import React, { useRef } from 'react';
-import { PeanutBatch } from '../types';
+import { PeanutBatch, AppTemplate } from '../types';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { 
   Printer, ArrowLeft, Calendar, User, ShoppingBag, 
@@ -18,6 +18,7 @@ interface BatchDetailsProps {
   isAdminMode: boolean;
   onEdit?: (batch: PeanutBatch) => void;
   onChangeStatus?: (batch: PeanutBatch, newStatus: PeanutBatch['status']) => Promise<void>;
+  template: AppTemplate;
 }
 
 export default function BatchDetails({
@@ -26,6 +27,7 @@ export default function BatchDetails({
   isAdminMode,
   onEdit,
   onChangeStatus,
+  template,
 }: BatchDetailsProps) {
   // Build self-referential URL containing the batch's QR lookup link
   const qrUrl = `${window.location.origin}?id=${batch.id}`;
@@ -122,9 +124,9 @@ export default function BatchDetails({
             </div>
             <div>
               <span className="bg-white/15 border border-white/20 text-bento-cream text-[10px] tracking-wide font-extrabold px-2.5 py-1 rounded-full uppercase">
-                TAIWAN PEANUT ORIGINAL
+                {template.breed.customLabel.toUpperCase()} ORIGINAL TRACEABILITY
               </span>
-              <h2 className="text-2xl font-black font-sans tracking-tight mt-2.5">安心花生生產履歷與檢驗證明</h2>
+              <h2 className="text-2xl font-black font-sans tracking-tight mt-2.5">安心{template.breed.customLabel}生產履歷與檢驗證明</h2>
               <p className="text-bento-cream/90 text-xs mt-1">
                 此憑證經手動錄入防竄改儲存，可透過右側 QR 行動溯源碼核實本批物料真偽。
               </p>
@@ -155,25 +157,25 @@ export default function BatchDetails({
             <div className="bg-[#FDFBF7] border border-bento-cream p-5 rounded-2xl">
               <h3 className="text-xs font-bold uppercase tracking-wider text-bento-dark mb-4 flex items-center">
                 <User className="w-4 h-4 mr-1.5 text-bento-mid" />
-                <span>1. 來源與植物品種資訊</span>
+                <span>1. 來源與品種履歷型態</span>
               </h3>
               
               <div className="grid grid-cols-2 gap-y-4 gap-x-6">
                 <div>
-                  <span className="block text-xs text-bento-mid">履歷溯源編號</span>
+                  <span className="block text-xs text-bento-mid">{template.id.customLabel}</span>
                   <span className="font-mono text-sm font-bold text-bento-dark">{batch.id}</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-bento-mid">花生品種 / 種類</span>
+                  <span className="block text-xs text-bento-mid">{template.breed.customLabel}</span>
                   <span className="text-sm font-black text-amber-900">{batch.breed}</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-bento-mid">農民姓名</span>
+                  <span className="block text-xs text-bento-mid">{template.farmer.customLabel}</span>
                   <span className="text-sm font-bold text-bento-dark">{batch.farmer}</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-bento-mid">入庫淨重量</span>
-                  <span className="text-sm font-bold text-bento-dark">{batch.weight.toLocaleString()} 公斤 (Kg)</span>
+                  <span className="block text-xs text-bento-mid">{template.weight.customLabel}</span>
+                  <span className="text-sm font-bold text-bento-dark">{batch.weight.toLocaleString()} 單位</span>
                 </div>
               </div>
             </div>
@@ -182,20 +184,20 @@ export default function BatchDetails({
             <div className="bg-[#FDFBF7] border border-bento-cream p-5 rounded-2xl">
               <h3 className="text-xs font-bold uppercase tracking-wider text-bento-dark mb-4 flex items-center">
                 <Calendar className="w-4 h-4 mr-1.5 text-bento-mid" />
-                <span>2. 歷史時程與儲位資訊</span>
+                <span>2. 時程歷史與儲地管理資訊</span>
               </h3>
               
               <div className="grid grid-cols-3 gap-y-4 gap-x-4">
                 <div>
-                  <span className="block text-xs text-bento-mid">農田採收日期</span>
+                  <span className="block text-xs text-bento-mid">{template.harvestDate.customLabel}</span>
                   <span className="text-sm font-bold text-bento-dark">{batch.harvestDate}</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-bento-mid">入庫儲存日期</span>
+                  <span className="block text-xs text-bento-mid">{template.entryDate.customLabel}</span>
                   <span className="text-sm font-bold text-bento-dark">{batch.entryDate}</span>
                 </div>
                 <div>
-                  <span className="block text-xs text-bento-mid">指定倉庫存放儲位</span>
+                  <span className="block text-xs text-bento-mid">{template.warehouseLocation.customLabel}</span>
                   <span className="text-sm font-bold text-amber-800 flex items-center">
                     <MapPin className="w-3.5 h-3.5 mr-0.5 text-amber-700" />
                     <span>{batch.warehouseLocation}</span>
@@ -208,40 +210,40 @@ export default function BatchDetails({
             <div className="bg-[#FDFBF7] border border-bento-cream p-5 rounded-2xl">
               <h3 className="text-xs font-bold uppercase tracking-wider text-bento-dark mb-4 flex items-center">
                 <Activity className="w-4 h-4 mr-1.5 text-bento-mid" />
-                <span>3. 物理與生物安全檢驗數據</span>
+                <span>3. 安全指標檢驗分析數據</span>
               </h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-3 bg-white rounded-xl border border-bento-cream/60 text-center shadow-sm">
-                  <span className="block text-[10px] text-bento-mid font-semibold mb-0.5">水分比率 (Moisture)</span>
+                  <span className="block text-[10px] text-bento-mid font-semibold mb-0.5">{template.moisture.customLabel}</span>
                   <span className="text-lg font-extrabold text-bento-dark">{batch.moisture}%</span>
-                  <span className="block text-[9px] text-[#8C7A6B] font-medium mt-0.5">合格標準 &lt;10%</span>
+                  <span className="block text-[9px] text-[#8C7A6B] font-medium mt-0.5">合格標準水位</span>
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border border-bento-cream/60 text-center shadow-sm">
-                  <span className="block text-[10px] text-bento-mid font-semibold mb-0.5">含油率比 (Oil Ratio)</span>
+                  <span className="block text-[10px] text-bento-mid font-semibold mb-0.5">{template.oilContent.customLabel}</span>
                   <span className="text-lg font-extrabold text-bento-dark">{batch.oilContent}%</span>
-                  <span className="block text-[9px] text-[#8C7A6B] font-medium mt-0.5">正常油質 45-52%</span>
+                  <span className="block text-[9px] text-[#8C7A6B] font-medium mt-0.5">常規標準比率</span>
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border border-bento-cream/60 text-center flex flex-col justify-between shadow-sm">
-                  <span className="block text-[10px] text-bento-mid font-semibold mb-1">黃麴毒素測試</span>
+                  <span className="block text-[10px] text-bento-mid font-semibold mb-1">{template.toxinStatus.customLabel}</span>
                   <div>
                     <span className={`inline-block px-2 py-0.5 text-[10px] font-bold border rounded-md ${getToxinBadgeStyle(batch.toxinStatus)}`}>
                       {batch.toxinStatus}
                     </span>
                   </div>
-                  <span className="block text-[8px] text-bento-mid mt-1">CNS 安全標準</span>
+                  <span className="block text-[8px] text-bento-mid mt-1">自主合規標準</span>
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border border-bento-cream/60 text-center flex flex-col justify-between shadow-sm">
-                  <span className="block text-[10px] text-bento-mid font-semibold mb-1">核定品質等級</span>
+                  <span className="block text-[10px] text-bento-mid font-semibold mb-1">{template.grade.customLabel}</span>
                   <div>
                     <span className={`inline-block px-2 py-0.5 border text-[10px] font-bold rounded-md ${getGradeBadgeStyle(batch.grade)}`}>
                       {batch.grade}
                     </span>
                   </div>
-                  <span className="block text-[8px] text-bento-mid mt-1">入庫品管判定</span>
+                  <span className="block text-[8px] text-bento-mid mt-1">入庫盤點判定</span>
                 </div>
               </div>
             </div>
@@ -268,7 +270,7 @@ export default function BatchDetails({
             {/* Remarks */}
             {batch.remarks && (
               <div className="bg-bento-sand/40 border border-bento-cream p-4 rounded-xl text-bento-dark text-xs">
-                <strong className="block text-bento-dark mb-1">入庫管理員備註</strong>
+                <strong className="block text-bento-dark mb-1">{template.remarks.customLabel}</strong>
                 <p className="leading-relaxed text-[#5c4a3c]">{batch.remarks}</p>
               </div>
             )}
